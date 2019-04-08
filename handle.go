@@ -10,6 +10,7 @@ const (
 	ociHtypeError   = C.OCI_HTYPE_ERROR
 	ociHtypeSession = C.OCI_HTYPE_SESSION
 	ociHtypeService = C.OCI_HTYPE_SVCCTX
+	ociHtypeCPool   = C.OCI_HTYPE_CPOOL
 )
 
 /*
@@ -154,4 +155,34 @@ func NewService(env *Environment) (*Service, error) {
 		return nil, getError(unsafe.Pointer(env.handle), ociHtypeEnv)
 	}
 	return &Service{handle: (*C.OCISvcCtx)(handle)}, nil
+}
+
+/*
+ * Connection Pool Handle
+ */
+
+type ConnectionPool struct {
+	handle *C.OCICPool
+}
+
+func (cp *ConnectionPool) Close() error {
+	return free(unsafe.Pointer(cp.handle), ociHtypeCPool)
+}
+
+func NewConnectionPool(env *Environment) (*ConnectionPool, error) {
+	var handle unsafe.Pointer
+	var buffer *unsafe.Pointer
+
+	result := C.OCIHandleAlloc(
+		unsafe.Pointer(env.handle),
+		&handle,
+		ociHtypeCPool,
+		C.size_t(0),
+		buffer,
+	)
+
+	if ociSuccess != result {
+		return nil, getError(unsafe.Pointer(env.handle), ociHtypeCPool)
+	}
+	return &ConnectionPool{handle: (*C.OCICPool)(handle)}, nil
 }
