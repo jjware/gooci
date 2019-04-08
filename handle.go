@@ -17,16 +17,16 @@ const (
  * Environment Handle
  */
 
-type Environment struct {
+type Env struct {
 	handle *C.OCIEnv
 }
 
-func (env *Environment) Close() error {
+func (env *Env) Close() error {
 	return free(unsafe.Pointer(env.handle), ociHtypeEnv)
 }
 
-func NewEnvironment(mode EnvironmentMode) (*Environment, error) {
-	env := &Environment{handle: nil}
+func EnvCreate(mode EnvironmentMode) (*Env, error) {
+	env := &Env{handle: nil}
 	m := C.ub4(mode)
 
 	result := C.OCIEnvNlsCreate(&env.handle, m, nil, nil, nil, nil, C.size_t(0), nil, 0, 0)
@@ -49,7 +49,7 @@ func (srv *Server) Close() error {
 	return free(unsafe.Pointer(srv.handle), ociHtypeServer)
 }
 
-func NewServer(env *Environment) (*Server, error) {
+func NewServer(env *Env) (*Server, error) {
 	var handle unsafe.Pointer
 	var buffer *unsafe.Pointer
 
@@ -79,7 +79,7 @@ func (e *Error) Close() error {
 	return free(unsafe.Pointer(e.handle), ociHtypeError)
 }
 
-func NewError(env *Environment) (*Error, error) {
+func NewError(env *Env) (*Error, error) {
 	var handle unsafe.Pointer
 	var buffer *unsafe.Pointer
 
@@ -109,7 +109,7 @@ func (s *Session) Close() error {
 	return free(unsafe.Pointer(s.handle), ociHtypeSession)
 }
 
-func NewSession(env *Environment) (*Session, error) {
+func NewSession(env *Env) (*Session, error) {
 	var handle unsafe.Pointer
 	var buffer *unsafe.Pointer
 
@@ -131,15 +131,15 @@ func NewSession(env *Environment) (*Session, error) {
  * Service Handle
  */
 
-type Service struct {
+type SvcCtx struct {
 	handle *C.OCISvcCtx
 }
 
-func (s *Service) Close() error {
+func (s *SvcCtx) Close() error {
 	return free(unsafe.Pointer(s.handle), ociHtypeService)
 }
 
-func NewService(env *Environment) (*Service, error) {
+func NewService(env *Env) (*SvcCtx, error) {
 	var handle unsafe.Pointer
 	var buffer *unsafe.Pointer
 
@@ -154,22 +154,22 @@ func NewService(env *Environment) (*Service, error) {
 	if ociSuccess != result {
 		return nil, getError(unsafe.Pointer(env.handle), ociHtypeEnv)
 	}
-	return &Service{handle: (*C.OCISvcCtx)(handle)}, nil
+	return &SvcCtx{handle: (*C.OCISvcCtx)(handle)}, nil
 }
 
 /*
  * Connection Pool Handle
  */
 
-type ConnectionPool struct {
+type CPool struct {
 	handle *C.OCICPool
 }
 
-func (cp *ConnectionPool) Close() error {
+func (cp *CPool) Close() error {
 	return free(unsafe.Pointer(cp.handle), ociHtypeCPool)
 }
 
-func NewConnectionPool(env *Environment) (*ConnectionPool, error) {
+func NewConnectionPool(env *Env) (*CPool, error) {
 	var handle unsafe.Pointer
 	var buffer *unsafe.Pointer
 
@@ -184,5 +184,5 @@ func NewConnectionPool(env *Environment) (*ConnectionPool, error) {
 	if ociSuccess != result {
 		return nil, getError(unsafe.Pointer(env.handle), ociHtypeCPool)
 	}
-	return &ConnectionPool{handle: (*C.OCICPool)(handle)}, nil
+	return &CPool{handle: (*C.OCICPool)(handle)}, nil
 }
