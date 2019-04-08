@@ -25,7 +25,7 @@ func (env *Env) Close() error {
 	return free(unsafe.Pointer(env.handle), ociHtypeEnv)
 }
 
-func EnvCreate(mode EnvironmentMode) (*Env, error) {
+func EnvCreate(mode Mode) (*Env, error) {
 	env := &Env{handle: nil}
 	m := C.ub4(mode)
 

@@ -18,16 +18,16 @@ const (
 	ociInvalidHandle   = C.int(-2)
 )
 
-type EnvironmentMode int
+type Mode int
 
 const (
-	Default            = EnvironmentMode(C.OCI_DEFAULT)
-	Threaded           = EnvironmentMode(C.OCI_THREADED)
-	Object             = EnvironmentMode(C.OCI_OBJECT)
-	Events             = EnvironmentMode(C.OCI_EVENTS)
-	NoUCB              = EnvironmentMode(C.OCI_NO_UCB)
-	NoMutex            = EnvironmentMode(C.OCI_NO_MUTEX)
-	NewLengthSemantics = EnvironmentMode(C.OCI_NEW_LENGTH_SEMANTICS)
+	Default            = Mode(C.OCI_DEFAULT)
+	Threaded           = Mode(C.OCI_THREADED)
+	Object             = Mode(C.OCI_OBJECT)
+	Events             = Mode(C.OCI_EVENTS)
+	NoUCB              = Mode(C.OCI_NO_UCB)
+	NoMutex            = Mode(C.OCI_NO_MUTEX)
+	NewLengthSemantics = Mode(C.OCI_NEW_LENGTH_SEMANTICS)
 )
 
 func checkResult(result C.int, err *Error) error {
