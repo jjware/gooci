@@ -4,52 +4,41 @@ package gooci
 // #include "gooci.h"
 import "C"
 import (
-	"bytes"
+	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"unsafe"
 )
 
-const (
-	ociSuccess         = C.int(0)
-	ociSuccessWithInfo = C.int(1)
-	ociError           = C.int(-1)
-	ociNoData          = C.int(100)
-	ociInvalidHandle   = C.int(-2)
-)
+const maxErrorMessageSize = 3024
 
 type Mode int
 
 const (
-	Default            = Mode(C.OCI_DEFAULT)
-	Threaded           = Mode(C.OCI_THREADED)
-	Object             = Mode(C.OCI_OBJECT)
-	Events             = Mode(C.OCI_EVENTS)
-	NoUCB              = Mode(C.OCI_NO_UCB)
-	NoMutex            = Mode(C.OCI_NO_MUTEX)
-	NewLengthSemantics = Mode(C.OCI_NEW_LENGTH_SEMANTICS)
+	ModeDefault            = Mode(C.OCI_DEFAULT)
+	ModeThreaded           = Mode(C.OCI_THREADED)
+	ModeObject             = Mode(C.OCI_OBJECT)
+	ModeEvents             = Mode(C.OCI_EVENTS)
+	ModeNoUCB              = Mode(C.OCI_NO_UCB)
+	ModeNoMutex            = Mode(C.OCI_NO_MUTEX)
+	ModeNewLengthSemantics = Mode(C.OCI_NEW_LENGTH_SEMANTICS)
 )
 
-func checkResult(result C.int, err *Error) error {
-	if ociSuccess == result {
-		return nil
-	} else if ociSuccessWithInfo == result {
-		log.Printf("info: %s", getError(unsafe.Pointer(err.handle), ociHtypeError).Error())
-		return nil
+func firstNullByteIndex(s []C.uchar) int {
+	for i := 0; i < len(s); i++ {
+		if 0 == s[i] {
+			return i
+		}
 	}
-	return getError(unsafe.Pointer(err.handle), ociHtypeError)
+	return -1
 }
 
-func free(handle unsafe.Pointer, handleType C.uint) error {
-	result := C.OCIHandleFree(handle, C.uint(handleType))
+type cString []C.uchar
 
-	if ociSuccess != result {
-		return getError(unsafe.Pointer(handle), handleType)
-	}
-	return nil
+func (m cString) String() string {
+	return fmt.Sprintf("%v", m[0:firstNullByteIndex(m)])
 }
-
-const maxErrorMessageSize = 3024
 
 type errorRecord map[int]string
 
@@ -68,31 +57,42 @@ func (e errorRecord) Error() string {
 	return str
 }
 
-func getError(handle unsafe.Pointer, handleType C.uint) error {
-	recordNMB := C.uint(1)
-	var sqlState *C.uchar = nil
+func getError(handlep unsafe.Pointer, handleType C.ub4) error {
+	var sqlState *C.OraText
+	var eCode C.sb4
+	eMessage := make(cString, maxErrorMessageSize)
 	eRecord := make(errorRecord)
 
 	for {
-		eCode := C.int(0)
-		eText := make([]byte, maxErrorMessageSize)
-
-		eResult := C.OCIErrorGet(
-			handle,
-			recordNMB,
+		r2 := C.OCIErrorGet(
+			handlep,
+			C.ub4(1),
 			sqlState,
 			&eCode,
-			(*C.OraText)(&eText[0]),
+			&eMessage[0],
 			C.uint(maxErrorMessageSize),
 			handleType,
 		)
 
-		if ociNoData == eResult {
+		if C.OCI_ERROR == r2 {
+			return errors.New("message larger than buffer")
+		} else if C.OCI_INVALID_HANDLE == r2 {
+			return errors.New("invalid handle")
+		} else if C.OCI_SUCCESS == r2 {
+			eRecord[int(eCode)] = eMessage.String()
+		} else {
 			break
-		} else if ociSuccess == eResult {
-			ndx := bytes.IndexByte(eText, 0)
-			eRecord[int(eCode)] = string(eText[:ndx])
 		}
 	}
 	return eRecord
+}
+
+func checkResult(result C.int, err *Error) error {
+	if C.OCI_SUCCESS == result {
+		return nil
+	} else if C.OCI_SUCCESS_WITH_INFO == result {
+		log.Printf("info: %s", getError(unsafe.Pointer(err.handle), C.OCI_HTYPE_ERROR).Error())
+		return nil
+	}
+	return getError(unsafe.Pointer(err.handle), C.OCI_HTYPE_ERROR)
 }

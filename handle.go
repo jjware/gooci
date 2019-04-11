@@ -2,51 +2,58 @@ package gooci
 
 // #include "gooci.h"
 import "C"
-import "unsafe"
-
-const (
-	ociHtypeEnv     = C.OCI_HTYPE_ENV
-	ociHtypeServer  = C.OCI_HTYPE_SERVER
-	ociHtypeError   = C.OCI_HTYPE_ERROR
-	ociHtypeSession = C.OCI_HTYPE_SESSION
-	ociHtypeService = C.OCI_HTYPE_SVCCTX
-	ociHtypeCPool   = C.OCI_HTYPE_CPOOL
+import (
+	"errors"
+	"fmt"
+	"unsafe"
 )
-
-/*
- * Environment Handle
- */
 
 type Env struct {
 	handle *C.OCIEnv
 }
 
 func (env *Env) Close() error {
-	return free(unsafe.Pointer(env.handle), ociHtypeEnv)
-}
+	result := C.OCIHandleFree(unsafe.Pointer(env.handle), C.OCI_HTYPE_ENV)
 
-func EnvCreate(mode Mode) (*Env, error) {
-	env := &Env{handle: nil}
-	m := C.ub4(mode)
-
-	result := C.OCIEnvNlsCreate(&env.handle, m, nil, nil, nil, nil, C.size_t(0), nil, 0, 0)
-
-	if ociSuccess != result {
-		return nil, getError(unsafe.Pointer(env.handle), ociHtypeEnv)
+	if C.OCI_INVALID_HANDLE == result {
+		return fmt.Errorf("invalid handle")
 	}
-	return env, nil
+	return nil
 }
 
-/*
- * Server Handle
- */
+func NewEnv(mode Mode) (*Env, error) {
+	var env Env
+
+	r1 := C.OCIEnvNlsCreate(
+		&env.handle,
+		C.ub4(mode),
+		nil,
+		nil,
+		nil,
+		nil,
+		C.size_t(0),
+		nil,
+		C.ub2(0),
+		C.ub2(0),
+	)
+
+	if C.OCI_ERROR == r1 {
+		return nil, getError(unsafe.Pointer(env.handle), C.OCI_HTYPE_ENV)
+	}
+	return &env, nil
+}
 
 type Server struct {
 	handle *C.OCIServer
 }
 
 func (srv *Server) Close() error {
-	return free(unsafe.Pointer(srv.handle), ociHtypeServer)
+	result := C.OCIHandleFree(unsafe.Pointer(srv.handle), C.OCI_HTYPE_SERVER)
+
+	if C.OCI_INVALID_HANDLE == result {
+		return fmt.Errorf("invalid handle")
+	}
+	return nil
 }
 
 func NewServer(env *Env) (*Server, error) {
@@ -56,27 +63,30 @@ func NewServer(env *Env) (*Server, error) {
 	result := C.OCIHandleAlloc(
 		unsafe.Pointer(env.handle),
 		&handle,
-		ociHtypeServer,
+		C.OCI_HTYPE_SERVER,
 		C.size_t(0),
 		buffer,
 	)
 
-	if ociSuccess != result {
-		return nil, getError(unsafe.Pointer(env.handle), ociHtypeEnv)
+	if C.OCI_INVALID_HANDLE == result {
+		return nil, errors.New("invalid handle")
+	} else if C.OCI_ERROR == result {
+		return nil, getError(unsafe.Pointer(env.handle), C.OCI_HTYPE_ENV)
 	}
 	return &Server{handle: (*C.OCIServer)(handle)}, nil
 }
-
-/*
- * Error Handle
- */
 
 type Error struct {
 	handle *C.OCIError
 }
 
 func (e *Error) Close() error {
-	return free(unsafe.Pointer(e.handle), ociHtypeError)
+	result := C.OCIHandleFree(unsafe.Pointer(e.handle), C.OCI_HTYPE_ERROR)
+
+	if C.OCI_INVALID_HANDLE == result {
+		return fmt.Errorf("invalid handle")
+	}
+	return nil
 }
 
 func NewError(env *Env) (*Error, error) {
@@ -86,27 +96,30 @@ func NewError(env *Env) (*Error, error) {
 	result := C.OCIHandleAlloc(
 		unsafe.Pointer(env.handle),
 		&handle,
-		ociHtypeError,
+		C.OCI_HTYPE_ERROR,
 		C.size_t(0),
 		buffer,
 	)
 
-	if ociSuccess != result {
-		return nil, getError(unsafe.Pointer(env.handle), ociHtypeEnv)
+	if C.OCI_INVALID_HANDLE == result {
+		return nil, errors.New("invalid handle")
+	} else if C.OCI_ERROR == result {
+		return nil, getError(unsafe.Pointer(env.handle), C.OCI_HTYPE_ENV)
 	}
 	return &Error{handle: (*C.OCIError)(handle)}, nil
 }
-
-/*
- * Session Handle
- */
 
 type Session struct {
 	handle *C.OCISession
 }
 
 func (s *Session) Close() error {
-	return free(unsafe.Pointer(s.handle), ociHtypeSession)
+	result := C.OCIHandleFree(unsafe.Pointer(s.handle), C.OCI_HTYPE_SESSION)
+
+	if C.OCI_INVALID_HANDLE == result {
+		return fmt.Errorf("invalid handle")
+	}
+	return nil
 }
 
 func NewSession(env *Env) (*Session, error) {
@@ -116,57 +129,63 @@ func NewSession(env *Env) (*Session, error) {
 	result := C.OCIHandleAlloc(
 		unsafe.Pointer(env.handle),
 		&handle,
-		ociHtypeSession,
+		C.OCI_HTYPE_SESSION,
 		C.size_t(0),
 		buffer,
 	)
 
-	if ociSuccess != result {
-		return nil, getError(unsafe.Pointer(env.handle), ociHtypeEnv)
+	if C.OCI_INVALID_HANDLE == result {
+		return nil, errors.New("invalid handle")
+	} else if C.OCI_ERROR == result {
+		return nil, getError(unsafe.Pointer(env.handle), C.OCI_HTYPE_ENV)
 	}
 	return &Session{handle: (*C.OCISession)(handle)}, nil
 }
-
-/*
- * Service Handle
- */
 
 type SvcCtx struct {
 	handle *C.OCISvcCtx
 }
 
 func (s *SvcCtx) Close() error {
-	return free(unsafe.Pointer(s.handle), ociHtypeService)
+	result := C.OCIHandleFree(unsafe.Pointer(s.handle), C.OCI_HTYPE_SVCCTX)
+
+	if C.OCI_INVALID_HANDLE == result {
+		return fmt.Errorf("invalid handle")
+	}
+	return nil
 }
 
-func NewService(env *Env) (*SvcCtx, error) {
+func NewSvcCtx(env *Env) (*SvcCtx, error) {
 	var handle unsafe.Pointer
 	var buffer *unsafe.Pointer
 
 	result := C.OCIHandleAlloc(
 		unsafe.Pointer(env.handle),
 		&handle,
-		ociHtypeService,
+		C.OCI_HTYPE_SVCCTX,
 		C.size_t(0),
 		buffer,
 	)
 
-	if ociSuccess != result {
-		return nil, getError(unsafe.Pointer(env.handle), ociHtypeEnv)
+	if C.OCI_INVALID_HANDLE == result {
+		return nil, errors.New("invalid handle")
+	} else if C.OCI_ERROR == result {
+		return nil, getError(unsafe.Pointer(env.handle), C.OCI_HTYPE_ENV)
 	}
 	return &SvcCtx{handle: (*C.OCISvcCtx)(handle)}, nil
 }
-
-/*
- * Connection Pool Handle
- */
 
 type CPool struct {
 	handle *C.OCICPool
 }
 
 func (cp *CPool) Close() error {
-	return free(unsafe.Pointer(cp.handle), ociHtypeCPool)
+	result := C.OCIHandleFree(unsafe.Pointer(cp.handle), C.OCI_HTYPE_CPOOL)
+
+	if C.OCI_INVALID_HANDLE == result {
+		return fmt.Errorf("invalid handle")
+	}
+	return nil
 }
 
 func NewConnectionPool(env *Env) (*CPool, error) {
@@ -176,13 +195,15 @@ func NewConnectionPool(env *Env) (*CPool, error) {
 	result := C.OCIHandleAlloc(
 		unsafe.Pointer(env.handle),
 		&handle,
-		ociHtypeCPool,
+		C.OCI_HTYPE_CPOOL,
 		C.size_t(0),
 		buffer,
 	)
 
-	if ociSuccess != result {
-		return nil, getError(unsafe.Pointer(env.handle), ociHtypeCPool)
+	if C.OCI_INVALID_HANDLE == result {
+		return nil, errors.New("invalid handle")
+	} else if C.OCI_ERROR == result {
+		return nil, getError(unsafe.Pointer(env.handle), C.OCI_HTYPE_ENV)
 	}
 	return &CPool{handle: (*C.OCICPool)(handle)}, nil
 }
