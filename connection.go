@@ -44,5 +44,5 @@ func ConnectionPoolCreate(
 	if nil != err {
 		return "", err
 	}
-	return cStringToGoString(poolName, poolLen), nil
+	return cStringToGoString(poolName, int(poolLen)), nil
 }

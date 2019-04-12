@@ -5,7 +5,6 @@ package gooci
 import "C"
 import (
 	"errors"
-	"fmt"
 	"log"
 	"unsafe"
 )
@@ -24,7 +23,7 @@ const (
 	ModeNewLengthSemantics = Mode(C.OCI_NEW_LENGTH_SEMANTICS)
 )
 
-func firstNullByteIndex(s []byte) int {
+func firstNullByteIndex(s []C.uchar) int {
 	for i := 0; i < len(s); i++ {
 		if 0 == s[i] {
 			return i
@@ -33,13 +32,12 @@ func firstNullByteIndex(s []byte) int {
 	return -1
 }
 
-func cStringToGoString(s *C.uchar, l C.int) (result string) {
-	size := int(unsafe.Sizeof(*s))
-	length := int(l)
+func cStringToGoString(str *C.uchar, length int) (result string) {
+	size := int(unsafe.Sizeof(*str))
 
-	byt := C.GoBytes(unsafe.Pointer(s), (C.int)(size*length))
+	byt := C.GoBytes(unsafe.Pointer(str), (C.int)(size*length))
 
-	return string(byt[0:firstNullByteIndex(byt)])
+	return string(byt)
 }
 
 func goStringToCString(s string) *C.uchar {
@@ -91,8 +89,7 @@ func getError(handlep unsafe.Pointer, handleType C.ub4) error {
 	} else if C.OCI_INVALID_HANDLE == r2 {
 		return errors.New("invalid handle")
 	} else if C.OCI_SUCCESS == r2 {
-		fmt.Println("get error: success")
-		eRecord[int(eCode)] = cStringToGoString(&eMessage[0], maxErrorMessageSize)
+		eRecord[int(eCode)] = cStringToGoString(&eMessage[0], firstNullByteIndex(eMessage))
 	}
 	return eRecord
 }
