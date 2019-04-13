@@ -46,3 +46,12 @@ func ConnectionPoolCreate(
 	}
 	return cStringToGoString(poolName, int(poolLen)), nil
 }
+
+func ConnectionPoolDestroy(
+	cpool *CPool,
+	e *Error,
+	mode Mode,
+) error {
+	result := C.OCIConnectionPoolDestroy(cpool.handle, e.handle, C.ub4(mode))
+	return checkResult(result)
+}

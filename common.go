@@ -21,6 +21,14 @@ const (
 	ModeNoUCB              = Mode(C.OCI_NO_UCB)
 	ModeNoMutex            = Mode(C.OCI_NO_MUTEX)
 	ModeNewLengthSemantics = Mode(C.OCI_NEW_LENGTH_SEMANTICS)
+	ModeCPoolReinitialize  = Mode(C.OCI_CPOOL_REINITIALIZE)
+)
+
+type Cred int
+
+const (
+	CredRDBMS = Cred(C.OCI_CRED_RDBMS)
+	CredExt   = Cred(C.OCI_CRED_EXT)
 )
 
 func firstNullByteIndex(s []C.uchar) int {
@@ -34,9 +42,7 @@ func firstNullByteIndex(s []C.uchar) int {
 
 func cStringToGoString(str *C.uchar, length int) (result string) {
 	size := int(unsafe.Sizeof(*str))
-
 	byt := C.GoBytes(unsafe.Pointer(str), (C.int)(size*length))
-
 	return string(byt)
 }
 
@@ -69,7 +75,7 @@ func (e errorRecord) Error() string {
 }
 
 func getError(handlep unsafe.Pointer, handleType C.ub4) error {
-	var sqlState *C.OraText
+	var sqlState *C.uchar
 	var eCode C.sb4
 	eMessage := make([]C.uchar, maxErrorMessageSize)
 	eRecord := make(errorRecord)
