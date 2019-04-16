@@ -4,12 +4,22 @@ package gooci
 // #include "gooci.h"
 import "C"
 import (
-	"errors"
-	"log"
 	"unsafe"
 )
 
-const maxErrorMessageSize = 3024
+type Result int
+
+const (
+	ResultSuccess         = Result(C.OCI_SUCCESS)
+	ResultSuccessWithInfo = Result(C.OCI_SUCCESS_WITH_INFO)
+	ResultNoData          = Result(C.OCI_NO_DATA)
+	ResultError           = Result(C.OCI_ERROR)
+	ResultInvalidHandle   = Result(C.OCI_INVALID_HANDLE)
+	ResultNeedData        = Result(C.OCI_NEED_DATA)
+	ResultStillExecuting  = Result(C.OCI_STILL_EXECUTING)
+	ResultContinue        = Result(C.OCI_CONTINUE)
+	ResultRowCbkDone      = Result(C.OCI_ROWCBK_DONE)
+)
 
 type Mode int
 
@@ -55,57 +65,4 @@ func goStringToCString(s string) *C.uchar {
 	}
 	arr[i] = 0
 	return &arr[0]
-}
-
-type errorRecord map[int]string
-
-func (e errorRecord) Error() string {
-	str := ""
-	ctr := 0
-
-	for _, v := range e {
-
-		if ctr > 0 {
-			str = str + ": "
-		}
-		str += v
-		ctr++
-	}
-	return str
-}
-
-func getError(handlep unsafe.Pointer, handleType C.ub4) error {
-	var sqlState *C.uchar
-	var eCode C.sb4
-	eMessage := make([]C.uchar, maxErrorMessageSize)
-	eRecord := make(errorRecord)
-
-	r2 := C.OCIErrorGet(
-		handlep,
-		C.ub4(1),
-		sqlState,
-		&eCode,
-		&eMessage[0],
-		C.uint(maxErrorMessageSize),
-		handleType,
-	)
-
-	if C.OCI_ERROR == r2 {
-		return errors.New("message larger than buffer")
-	} else if C.OCI_INVALID_HANDLE == r2 {
-		return errors.New("invalid handle")
-	} else if C.OCI_SUCCESS == r2 {
-		eRecord[int(eCode)] = cStringToGoString(&eMessage[0], firstNullByteIndex(eMessage))
-	}
-	return eRecord
-}
-
-func checkResult(result C.int, err *Error) error {
-	if C.OCI_SUCCESS == result {
-		return nil
-	} else if C.OCI_SUCCESS_WITH_INFO == result {
-		log.Printf("info: %s", getError(unsafe.Pointer(err.handle), C.OCI_HTYPE_ERROR).Error())
-		return nil
-	}
-	return getError(unsafe.Pointer(err.handle), C.OCI_HTYPE_ERROR)
 }
