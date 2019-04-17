@@ -67,3 +67,57 @@ func ConnectionPoolDestroy(cpp *CPool, errp *Error) Result {
 		C.OCI_DEFAULT,
 	))
 }
+
+func Logon2(
+	envp *Env,
+	errp *Error,
+	svcpp **SvcCtx,
+	username string,
+	password string,
+	dbname string,
+	mode Mode,
+) Result {
+	handle := (*C.OCISvcCtx)(*svcpp)
+
+	var cstrUsername *C.uchar
+	usernameLen := len(username)
+
+	var cstrPassword *C.uchar
+	passwordLen := len(password)
+
+	var cstrDBName *C.uchar
+	dbnameLen := len(dbname)
+
+	if usernameLen > 0 {
+		cstrUsername = goStringToCString(username)
+	} else {
+		cstrUsername = nil
+	}
+
+	if passwordLen > 0 {
+		cstrPassword = goStringToCString(password)
+	} else {
+		cstrPassword = nil
+	}
+
+	if dbnameLen > 0 {
+		cstrDBName = goStringToCString(dbname)
+	} else {
+		cstrDBName = nil
+	}
+
+	result := C.OCILogon2(
+		(*C.OCIEnv)(envp),
+		(*C.OCIError)(errp),
+		&handle,
+		cstrUsername,
+		C.ub4(usernameLen),
+		cstrPassword,
+		C.ub4(passwordLen),
+		cstrDBName,
+		C.ub4(dbnameLen),
+		C.ub4(mode),
+	)
+	*svcpp = (*SvcCtx)(handle)
+	return Result(result)
+}

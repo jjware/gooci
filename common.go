@@ -32,6 +32,10 @@ const (
 	ModeNoMutex            = Mode(C.OCI_NO_MUTEX)
 	ModeNewLengthSemantics = Mode(C.OCI_NEW_LENGTH_SEMANTICS)
 	ModeCPoolReinitialize  = Mode(C.OCI_CPOOL_REINITIALIZE)
+	ModeLogon2CPool = Mode(C.OCI_LOGON2_CPOOL)
+	ModeLogon2SPool = Mode(C.OCI_LOGON2_SPOOL)
+	ModeLogon2StmtCache = Mode(C.OCI_LOGON2_STMTCACHE)
+	ModeLogon2Proxy = Mode(C.OCI_LOGON2_STMTCACHE)
 )
 
 type Cred int
