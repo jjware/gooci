@@ -2,6 +2,22 @@ package gooci
 
 // #include "gooci.h"
 import "C"
+import "unsafe"
+
+func EnvNlsCreate(env **Env, mode Mode) Result {
+	return Result(C.OCIEnvNlsCreate(
+		(**C.OCIEnv)(unsafe.Pointer(env)),
+		C.ub4(mode),
+		nil,
+		nil,
+		nil,
+		nil,
+		C.size_t(0),
+		nil,
+		C.ub2(0),
+		C.ub2(0),
+	))
+}
 
 func ConnectionPoolCreate(
 	envp *Env,
