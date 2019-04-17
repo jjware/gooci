@@ -42,6 +42,6 @@ func ErrorGet(handle Handle, code *int, message *string) Result {
 		break
 	}
 	*code = int(cint)
-	*message = cStringToGoString(&cstr[0], firstNullByteIndex(cstr)+1)
+	*message = cStringToGoString(&cstr[0], firstNullByteIndex(cstr)) //ignore null byte
 	return Result(result)
 }
