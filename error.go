@@ -41,7 +41,13 @@ func ErrorGet(handle Handle, code *int, message *string) Result {
 		result = C.OCI_INVALID_HANDLE
 		break
 	}
-	*code = int(cint)
-	*message = cStringToGoString(&cstr[0], firstNullByteIndex(cstr)) //ignore null byte
+
+	if nil != code {
+		*code = int(cint)
+	}
+
+	if nil != message {
+		*message = cStringToGoString(&cstr[0], firstNullByteIndex(cstr)) //ignore null byte
+	}
 	return Result(result)
 }

@@ -59,7 +59,10 @@ func ConnectionPoolCreate(
 		C.sb4(len(password)),
 		C.ub4(mode),
 	)
-	*namep = cStringToGoString(cstrName, int(nameLen))
+
+	if nil != namep {
+		*namep = cStringToGoString(cstrName, int(nameLen))
+	}
 	return Result(result)
 }
 
