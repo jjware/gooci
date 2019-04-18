@@ -2,7 +2,10 @@ package gooci
 
 // #include "gooci.h"
 import "C"
-import "unsafe"
+import (
+	"fmt"
+	"unsafe"
+)
 
 func EnvNlsCreate(env **Env, mode Mode) Result {
 	return Result(C.OCIEnvNlsCreate(
@@ -73,51 +76,43 @@ func Logon2(
 	errp *Error,
 	svcpp **SvcCtx,
 	username string,
-	password string,
+	password fmt.Stringer,
 	dbname string,
 	mode Mode,
 ) Result {
 	handle := (*C.OCISvcCtx)(*svcpp)
 
-	var cstrUsername *C.uchar
-	usernameLen := len(username)
-
 	var cstrPassword *C.uchar
-	passwordLen := len(password)
+	var passwordLen int
 
-	var cstrDBName *C.uchar
-	dbnameLen := len(dbname)
+	cstrUsername := goStringToCString(username)
 
-	if usernameLen > 0 {
-		cstrUsername = goStringToCString(username)
-	} else {
-		cstrUsername = nil
-	}
-
-	if passwordLen > 0 {
-		cstrPassword = goStringToCString(password)
+	if nil != password {
+		strPassword := password.String()
+		cstrPassword= goStringToCString(strPassword)
+		passwordLen = len(strPassword)
 	} else {
 		cstrPassword = nil
+		passwordLen = 0
 	}
-
-	if dbnameLen > 0 {
-		cstrDBName = goStringToCString(dbname)
-	} else {
-		cstrDBName = nil
-	}
+	cstrDBName := goStringToCString(dbname)
 
 	result := C.OCILogon2(
 		(*C.OCIEnv)(envp),
 		(*C.OCIError)(errp),
 		&handle,
 		cstrUsername,
-		C.ub4(usernameLen),
+		C.ub4(len(username)),
 		cstrPassword,
 		C.ub4(passwordLen),
 		cstrDBName,
-		C.ub4(dbnameLen),
+		C.ub4(len(dbname)),
 		C.ub4(mode),
 	)
 	*svcpp = (*SvcCtx)(handle)
 	return Result(result)
+}
+
+func Logoff(svcp *SvcCtx, errp *Error) Result {
+	return Result(C.OCILogoff((*C.OCISvcCtx)(svcp), (*C.OCIError)(errp)))
 }

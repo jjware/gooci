@@ -32,10 +32,10 @@ const (
 	ModeNoMutex            = Mode(C.OCI_NO_MUTEX)
 	ModeNewLengthSemantics = Mode(C.OCI_NEW_LENGTH_SEMANTICS)
 	ModeCPoolReinitialize  = Mode(C.OCI_CPOOL_REINITIALIZE)
-	ModeLogon2CPool = Mode(C.OCI_LOGON2_CPOOL)
-	ModeLogon2SPool = Mode(C.OCI_LOGON2_SPOOL)
-	ModeLogon2StmtCache = Mode(C.OCI_LOGON2_STMTCACHE)
-	ModeLogon2Proxy = Mode(C.OCI_LOGON2_STMTCACHE)
+	ModeLogon2CPool        = Mode(C.OCI_LOGON2_CPOOL)
+	ModeLogon2SPool        = Mode(C.OCI_LOGON2_SPOOL)
+	ModeLogon2StmtCache    = Mode(C.OCI_LOGON2_STMTCACHE)
+	ModeLogon2Proxy        = Mode(C.OCI_LOGON2_STMTCACHE)
 )
 
 type Cred int
@@ -44,6 +44,12 @@ const (
 	CredRDBMS = Cred(C.OCI_CRED_RDBMS)
 	CredExt   = Cred(C.OCI_CRED_EXT)
 )
+
+type Text string
+
+func (t Text) String() string {
+	return string(t)
+}
 
 func firstNullByteIndex(s []C.uchar) int {
 	for i := 0; i < len(s); i++ {
