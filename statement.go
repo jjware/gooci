@@ -50,3 +50,30 @@ func StmtPrepare2(
 	*stmtpp = (*Stmt)(handle)
 	return Result(result)
 }
+
+func StmtRelease(
+	stmtp *Stmt,
+	errp *Error,
+	key fmt.Stringer,
+	mode Mode,
+) Result {
+	var cstrKey *C.uchar
+	var keyLen int
+
+	if nil != key {
+		strKey := key.String()
+		cstrKey = goStringToCString(strKey)
+		keyLen = len(strKey)
+	} else {
+		cstrKey = nil
+		keyLen = 0
+	}
+
+	return Result(C.OCIStmtRelease(
+		(*C.OCIStmt)(stmtp),
+		(*C.OCIError)(errp),
+		cstrKey,
+		C.ub4(keyLen),
+		C.ub4(mode),
+	))
+}
