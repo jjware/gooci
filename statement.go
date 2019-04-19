@@ -12,6 +12,21 @@ const (
 	SyntaxForeign = Syntax(C.OCI_FOREIGN_SYNTAX)
 )
 
+type StmtType int
+
+const (
+	StmtTypeSelect  = StmtType(C.OCI_STMT_SELECT)
+	StmtTypeUpdate  = StmtType(C.OCI_STMT_UPDATE)
+	StmtTypeDelete  = StmtType(C.OCI_STMT_DELETE)
+	StmtTypeInsert  = StmtType(C.OCI_STMT_INSERT)
+	StmtTypeCreate  = StmtType(C.OCI_STMT_CREATE)
+	StmtTypeDrop    = StmtType(C.OCI_STMT_DROP)
+	StmtTypeAlter   = StmtType(C.OCI_STMT_ALTER)
+	StmtTypeBegin   = StmtType(C.OCI_STMT_BEGIN)
+	StmtTypeDeclare = StmtType(C.OCI_STMT_DECLARE)
+	StmtTypeCall    = StmtType(C.OCI_STMT_CALL)
+)
+
 func StmtPrepare2(
 	svcp *SvcCtx,
 	stmtpp **Stmt,
